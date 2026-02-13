@@ -300,3 +300,4 @@ OSM データを使用する場合は、適切なクレジット表示が必要�
 - [osmium-tool](https://osmcode.org/osmium-tool/)
 - [pyosmium](https://osmcode.org/pyosmium/)
 "# my-matcha" 
+"# my-wagashi" 
