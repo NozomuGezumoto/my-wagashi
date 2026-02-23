@@ -1,28 +1,28 @@
 {
   "expo": {
-    "name": "My Sushi",
-    "slug": "my-sushi",
+    "name": "My Wagashi",
+    "slug": "my-wagashi",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "mysushi",
+    "icon": "./assets/wagashi-app-icon.png",
+    "scheme": "mywagashi",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/wagashi-app-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#f97316"
+      "backgroundColor": "#2d5016"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mysushi.app"
+      "bundleIdentifier": "com.mywagashi.app"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#f97316"
+        "foregroundImage": "./assets/wagashi-app-icon.png",
+        "backgroundColor": "#2d5016"
       },
-      "package": "com.mysushi.app",
+      "package": "com.mywagashi.app",
       "config": {
         "googleMaps": {
           "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
@@ -32,11 +32,9 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/wagashi-app-icon.png"
     },
-    "plugins": [
-      "expo-router"
-    ],
+    "plugins": ["expo-router"],
     "experiments": {
       "typedRoutes": true
     }

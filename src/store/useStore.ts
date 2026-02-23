@@ -1,392 +1,234 @@
 // ============================================
-// My Sushi - State Management
-// Using Zustand with AsyncStorage persistence
+// My Wagashi (和菓子) - State Management
+// ごちそうさまでした / 食べてみたい = チェックで記録
 // ============================================
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { WagashiGenre } from '../types';
+import { SEED_WANT_TO_TRY_IDS } from '../data/seedWantToTry';
 
-export interface VisitedShop {
-  id: string;          // OSM ID
-  visitedAt: string;   // ISO date string
-  note?: string;       // Optional memo
-  rating?: number;     // 1-5 stars (optional)
+export type WagashiSpotPinType = 'shop' | 'cafe' | 'factory';
+
+export interface TriedWagashiSpot {
+  id: string;
+  triedAt: string;
 }
 
-export interface WantToGoShop {
-  id: string;          // OSM ID
-  addedAt: string;     // ISO date string
-  note?: string;       // Optional memo
-  priority?: number;   // 1-3 priority (optional)
+export interface WagashiSpotMemo {
+  id: string;
+  note: string;
+  rating?: number;
+  photos?: string[];
+  updatedAt: string;
 }
 
-export interface ShopMemo {
-  id: string;          // OSM ID
-  note: string;        // User memo
-  rating?: number;     // 1-5 stars
-  photos?: string[];   // Array of photo URIs (max 4)
-  updatedAt: string;   // ISO date string
-}
-
-export interface CustomShop {
-  id: string;          // Custom ID (custom-{timestamp})
+export interface CustomWagashiSpot {
+  id: string;
   name: string;
-  type: 'restaurant' | 'fast_food' | 'seafood';
+  type: WagashiSpotPinType;
+  genre: WagashiGenre;
   lat: number;
   lng: number;
   address?: string;
   createdAt: string;
 }
 
-export type FilterMode = 'all' | 'wantToGo' | 'visited';
-export type DistanceFilter = 'none' | '500m' | '1km' | '3km';
-export type PrefectureFilter = string; // '' means all prefectures
+export type FilterMode = 'all' | 'tried' | 'wantToTry';
+export type PrefectureFilter = string;
+export type GenreFilter = WagashiGenre | '';
 
 interface StoreState {
-  // Data
-  visitedShops: VisitedShop[];
-  wantToGoShops: WantToGoShop[];
-  shopMemos: ShopMemo[];
-  customShops: CustomShop[];
-  excludedShops: string[]; // Array of excluded shop IDs
-  
-  // UI State
+  triedWagashiSpots: TriedWagashiSpot[];
+  wantToTryWagashiSpots: string[];
+  wagashiSpotMemos: WagashiSpotMemo[];
+  customWagashiSpots: CustomWagashiSpot[];
+  excludedWagashiSpots: string[];
+
   filterMode: FilterMode;
-  distanceFilter: DistanceFilter;
   prefectureFilter: PrefectureFilter;
-  excludeKaiten: boolean;
+  genreFilter: GenreFilter;
   hideExcluded: boolean;
-  
-  // Filter Actions
+
   setFilterMode: (mode: FilterMode) => void;
-  setDistanceFilter: (filter: DistanceFilter) => void;
   setPrefectureFilter: (filter: PrefectureFilter) => void;
-  setExcludeKaiten: (value: boolean) => void;
+  setGenreFilter: (filter: GenreFilter) => void;
   setHideExcluded: (value: boolean) => void;
-  
-  // Exclude Actions
-  excludeShop: (id: string) => void;
-  unexcludeShop: (id: string) => void;
+
+  excludeWagashiSpot: (id: string) => void;
+  unexcludeWagashiSpot: (id: string) => void;
   clearAllExcluded: () => void;
   isExcluded: (id: string) => boolean;
-  
-  // Visited Actions
-  markAsVisited: (id: string, note?: string, rating?: number) => void;
-  unmarkAsVisited: (id: string) => void;
-  isVisited: (id: string) => boolean;
-  getVisitedShop: (id: string) => VisitedShop | undefined;
-  updateVisitedShop: (id: string, updates: Partial<VisitedShop>) => void;
-  getVisitedCount: () => number;
-  
-  // Want to Go Actions
-  addToWantToGo: (id: string, note?: string) => void;
-  removeFromWantToGo: (id: string) => void;
-  isWantToGo: (id: string) => boolean;
-  getWantToGoShop: (id: string) => WantToGoShop | undefined;
-  getWantToGoCount: () => number;
-  
-  // Move from want-to-go to visited
-  moveToVisited: (id: string) => void;
-  
-  // Memo Actions
-  setShopMemo: (id: string, note: string, rating?: number) => void;
-  getShopMemo: (id: string) => ShopMemo | undefined;
-  deleteShopMemo: (id: string) => void;
-  
-  // Photo Actions
-  addShopPhoto: (id: string, photoUri: string) => void;
-  removeShopPhoto: (id: string, photoUri: string) => void;
-  getShopPhotos: (id: string) => string[];
-  
-  // Custom Shop Actions
-  addCustomShop: (shop: Omit<CustomShop, 'id' | 'createdAt'>) => string;
-  updateCustomShop: (id: string, updates: Partial<CustomShop>) => void;
-  deleteCustomShop: (id: string) => void;
-  getCustomShops: () => CustomShop[];
-  isCustomShop: (id: string) => boolean;
+
+  markAsTried: (id: string) => void;
+  unmarkAsTried: (id: string) => void;
+  isTried: (id: string) => boolean;
+  getTriedCount: () => number;
+
+  markAsWantToTry: (id: string) => void;
+  unmarkAsWantToTry: (id: string) => void;
+  isWantToTry: (id: string) => boolean;
+  getWantToTryCount: () => number;
+
+  setWagashiSpotMemo: (id: string, note: string, rating?: number) => void;
+  getWagashiSpotMemo: (id: string) => WagashiSpotMemo | undefined;
+
+  addWagashiSpotPhoto: (id: string, photoUri: string) => void;
+  removeWagashiSpotPhoto: (id: string, photoUri: string) => void;
+  getWagashiSpotPhotos: (id: string) => string[];
+
+  addCustomWagashiSpot: (spot: Omit<CustomWagashiSpot, 'id' | 'createdAt'>) => string;
+  updateCustomWagashiSpot: (id: string, updates: Partial<CustomWagashiSpot>) => void;
+  deleteCustomWagashiSpot: (id: string) => void;
+  getCustomWagashiSpots: () => CustomWagashiSpot[];
+  isCustomWagashiSpot: (id: string) => boolean;
 }
 
 export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
-      // Initial state
-      visitedShops: [],
-      wantToGoShops: [],
-      shopMemos: [],
-      customShops: [],
-      excludedShops: [],
+      triedWagashiSpots: [],
+      wantToTryWagashiSpots: [],
+      wagashiSpotMemos: [],
+      customWagashiSpots: [],
+      excludedWagashiSpots: [],
       filterMode: 'all',
-      distanceFilter: 'none',
       prefectureFilter: '',
-      excludeKaiten: false,
+      genreFilter: '',
       hideExcluded: false,
-      
-      // Filter Actions
-      setFilterMode: (mode) => {
-        set({ filterMode: mode });
-      },
-      
-      setDistanceFilter: (filter) => {
-        set({ distanceFilter: filter });
-      },
-      
-      setPrefectureFilter: (filter) => {
-        set({ prefectureFilter: filter });
-      },
-      
-      setExcludeKaiten: (value) => {
-        set({ excludeKaiten: value });
-      },
-      
-      setHideExcluded: (value) => {
-        set({ hideExcluded: value });
-      },
-      
-      // ============================================
-      // Exclude Actions
-      // ============================================
-      
-      excludeShop: (id) => {
+
+      setFilterMode: (mode) => set({ filterMode: mode }),
+      setPrefectureFilter: (filter) => set({ prefectureFilter: filter }),
+      setGenreFilter: (filter) => set({ genreFilter: filter }),
+      setHideExcluded: (value) => set({ hideExcluded: value }),
+
+      excludeWagashiSpot: (id) => {
         set((state) => {
-          if (state.excludedShops.includes(id)) return state;
-          return { excludedShops: [...state.excludedShops, id] };
+          if (state.excludedWagashiSpots.includes(id)) return state;
+          return { excludedWagashiSpots: [...state.excludedWagashiSpots, id] };
         });
       },
-      
-      unexcludeShop: (id) => {
+      unexcludeWagashiSpot: (id) => {
         set((state) => ({
-          excludedShops: state.excludedShops.filter((s) => s !== id),
+          excludedWagashiSpots: state.excludedWagashiSpots.filter((s) => s !== id),
         }));
       },
-      
-      clearAllExcluded: () => {
-        set({ excludedShops: [] });
-      },
-      
-      isExcluded: (id) => {
-        return get().excludedShops.includes(id);
-      },
-      
-      // ============================================
-      // Visited Actions
-      // ============================================
-      
-      markAsVisited: (id, note, rating) => {
-        const existing = get().visitedShops.find((v) => v.id === id);
-        if (existing) return;
-        
-        const newVisit: VisitedShop = {
-          id,
-          visitedAt: new Date().toISOString(),
-          note,
-          rating,
-        };
-        
+      clearAllExcluded: () => set({ excludedWagashiSpots: [] }),
+      isExcluded: (id) => get().excludedWagashiSpots.includes(id),
+
+      markAsTried: (id) => {
+        if (get().triedWagashiSpots.some((t) => t.id === id)) return;
         set((state) => ({
-          visitedShops: [...state.visitedShops, newVisit],
-          // Remove from want-to-go if exists
-          wantToGoShops: state.wantToGoShops.filter((w) => w.id !== id),
+          triedWagashiSpots: [...state.triedWagashiSpots, { id, triedAt: new Date().toISOString() }],
         }));
       },
-      
-      unmarkAsVisited: (id) => {
+      unmarkAsTried: (id) => {
         set((state) => ({
-          visitedShops: state.visitedShops.filter((v) => v.id !== id),
+          triedWagashiSpots: state.triedWagashiSpots.filter((t) => t.id !== id),
         }));
       },
-      
-      isVisited: (id) => {
-        return get().visitedShops.some((v) => v.id === id);
+      isTried: (id) => get().triedWagashiSpots.some((t) => t.id === id),
+      getTriedCount: () => get().triedWagashiSpots.length,
+
+      markAsWantToTry: (id) => {
+        if (get().wantToTryWagashiSpots.includes(id)) return;
+        set((state) => ({ wantToTryWagashiSpots: [...state.wantToTryWagashiSpots, id] }));
       },
-      
-      getVisitedShop: (id) => {
-        return get().visitedShops.find((v) => v.id === id);
-      },
-      
-      updateVisitedShop: (id, updates) => {
+      unmarkAsWantToTry: (id) => {
         set((state) => ({
-          visitedShops: state.visitedShops.map((v) =>
-            v.id === id ? { ...v, ...updates } : v
-          ),
+          wantToTryWagashiSpots: state.wantToTryWagashiSpots.filter((s) => s !== id),
         }));
       },
-      
-      getVisitedCount: () => {
-        return get().visitedShops.length;
-      },
-      
-      // ============================================
-      // Want to Go Actions
-      // ============================================
-      
-      addToWantToGo: (id, note) => {
-        const existing = get().wantToGoShops.find((w) => w.id === id);
-        if (existing) return;
-        
-        // Don't add if already visited
-        if (get().isVisited(id)) return;
-        
-        const newWant: WantToGoShop = {
-          id,
-          addedAt: new Date().toISOString(),
-          note,
-        };
-        
-        set((state) => ({
-          wantToGoShops: [...state.wantToGoShops, newWant],
-        }));
-      },
-      
-      removeFromWantToGo: (id) => {
-        set((state) => ({
-          wantToGoShops: state.wantToGoShops.filter((w) => w.id !== id),
-        }));
-      },
-      
-      isWantToGo: (id) => {
-        return get().wantToGoShops.some((w) => w.id === id);
-      },
-      
-      getWantToGoShop: (id) => {
-        return get().wantToGoShops.find((w) => w.id === id);
-      },
-      
-      getWantToGoCount: () => {
-        return get().wantToGoShops.length;
-      },
-      
-      // Move from want-to-go to visited
-      moveToVisited: (id) => {
-        const wantToGo = get().getWantToGoShop(id);
-        get().markAsVisited(id, wantToGo?.note);
-      },
-      
-      // ============================================
-      // Memo Actions
-      // ============================================
-      
-      setShopMemo: (id, note, rating) => {
+      isWantToTry: (id) => get().wantToTryWagashiSpots.includes(id),
+      getWantToTryCount: () => get().wantToTryWagashiSpots.length,
+
+      setWagashiSpotMemo: (id, note, rating) => {
         set((state) => {
-          const existing = state.shopMemos.find((m) => m.id === id);
+          const existing = state.wagashiSpotMemos.find((m) => m.id === id);
           if (existing) {
             return {
-              shopMemos: state.shopMemos.map((m) =>
-                m.id === id 
-                  ? { ...m, note, rating, updatedAt: new Date().toISOString() }
-                  : m
+              wagashiSpotMemos: state.wagashiSpotMemos.map((m) =>
+                m.id === id ? { ...m, note, rating, updatedAt: new Date().toISOString() } : m
               ),
             };
           }
           return {
-            shopMemos: [
-              ...state.shopMemos,
-              { id, note, rating, updatedAt: new Date().toISOString() },
-            ],
+            wagashiSpotMemos: [...state.wagashiSpotMemos, { id, note, rating, updatedAt: new Date().toISOString() }],
           };
         });
       },
-      
-      getShopMemo: (id) => {
-        return get().shopMemos.find((m) => m.id === id);
-      },
-      
-      deleteShopMemo: (id) => {
-        set((state) => ({
-          shopMemos: state.shopMemos.filter((m) => m.id !== id),
-        }));
-      },
-      
-      // ============================================
-      // Photo Actions
-      // ============================================
-      
-      addShopPhoto: (id, photoUri) => {
+      getWagashiSpotMemo: (id) => get().wagashiSpotMemos.find((m) => m.id === id),
+
+      addWagashiSpotPhoto: (id, photoUri) => {
         set((state) => {
-          const existing = state.shopMemos.find((m) => m.id === id);
+          const existing = state.wagashiSpotMemos.find((m) => m.id === id);
+          const photos = existing?.photos || [];
+          if (photos.length >= 4) return state;
           if (existing) {
-            const photos = existing.photos || [];
-            if (photos.length >= 4) return state; // Max 4 photos
             return {
-              shopMemos: state.shopMemos.map((m) =>
-                m.id === id
-                  ? { ...m, photos: [...photos, photoUri], updatedAt: new Date().toISOString() }
-                  : m
+              wagashiSpotMemos: state.wagashiSpotMemos.map((m) =>
+                m.id === id ? { ...m, photos: [...photos, photoUri], updatedAt: new Date().toISOString() } : m
               ),
             };
           }
-          // Create new memo with photo
           return {
-            shopMemos: [
-              ...state.shopMemos,
-              { id, note: '', photos: [photoUri], updatedAt: new Date().toISOString() },
-            ],
+            wagashiSpotMemos: [...state.wagashiSpotMemos, { id, note: '', photos: [photoUri], updatedAt: new Date().toISOString() }],
           };
         });
       },
-      
-      removeShopPhoto: (id, photoUri) => {
+      removeWagashiSpotPhoto: (id, photoUri) => {
         set((state) => ({
-          shopMemos: state.shopMemos.map((m) =>
-            m.id === id
-              ? { ...m, photos: (m.photos || []).filter((p) => p !== photoUri), updatedAt: new Date().toISOString() }
-              : m
+          wagashiSpotMemos: state.wagashiSpotMemos.map((m) =>
+            m.id === id ? { ...m, photos: (m.photos || []).filter((p) => p !== photoUri), updatedAt: new Date().toISOString() } : m
           ),
         }));
       },
-      
-      getShopPhotos: (id) => {
-        const memo = get().shopMemos.find((m) => m.id === id);
+      getWagashiSpotPhotos: (id) => {
+        const memo = get().wagashiSpotMemos.find((m) => m.id === id);
         return memo?.photos || [];
       },
-      
-      // ============================================
-      // Custom Shop Actions
-      // ============================================
-      
-      addCustomShop: (shop) => {
+
+      addCustomWagashiSpot: (spot) => {
         const id = `custom-${Date.now()}`;
         set((state) => ({
-          customShops: [
-            ...state.customShops,
-            { ...shop, id, createdAt: new Date().toISOString() },
-          ],
+          customWagashiSpots: [...state.customWagashiSpots, { ...spot, id, createdAt: new Date().toISOString() }],
         }));
         return id;
       },
-      
-      updateCustomShop: (id, updates) => {
+      updateCustomWagashiSpot: (id, updates) => {
         set((state) => ({
-          customShops: state.customShops.map((s) =>
-            s.id === id ? { ...s, ...updates } : s
-          ),
+          customWagashiSpots: state.customWagashiSpots.map((s) => (s.id === id ? { ...s, ...updates } : s)),
         }));
       },
-      
-      deleteCustomShop: (id) => {
+      deleteCustomWagashiSpot: (id) => {
         set((state) => ({
-          customShops: state.customShops.filter((s) => s.id !== id),
-          // Also remove related data
-          visitedShops: state.visitedShops.filter((v) => v.id !== id),
-          wantToGoShops: state.wantToGoShops.filter((w) => w.id !== id),
-          shopMemos: state.shopMemos.filter((m) => m.id !== id),
+          customWagashiSpots: state.customWagashiSpots.filter((s) => s.id !== id),
+          triedWagashiSpots: state.triedWagashiSpots.filter((t) => t.id !== id),
+          wantToTryWagashiSpots: state.wantToTryWagashiSpots.filter((s) => s !== id),
+          wagashiSpotMemos: state.wagashiSpotMemos.filter((m) => m.id !== id),
         }));
       },
-      
-      getCustomShops: () => get().customShops,
-      
-      isCustomShop: (id) => id.startsWith('custom-'),
+      getCustomWagashiSpots: () => get().customWagashiSpots,
+      isCustomWagashiSpot: (id) => id.startsWith('custom-'),
     }),
     {
-      name: 'my-sushi-storage',
+      name: 'my-wagashi-storage',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
-        visitedShops: state.visitedShops,
-        wantToGoShops: state.wantToGoShops,
-        shopMemos: state.shopMemos,
-        customShops: state.customShops,
-        excludedShops: state.excludedShops,
+        triedWagashiSpots: state.triedWagashiSpots,
+        wantToTryWagashiSpots: state.wantToTryWagashiSpots,
+        wagashiSpotMemos: state.wagashiSpotMemos,
+        customWagashiSpots: state.customWagashiSpots,
+        excludedWagashiSpots: state.excludedWagashiSpots,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state?.wantToTryWagashiSpots?.length) {
+          setTimeout(() => {
+            useStore.setState({ wantToTryWagashiSpots: SEED_WANT_TO_TRY_IDS });
+          }, 0);
+        }
+      },
     }
   )
 );

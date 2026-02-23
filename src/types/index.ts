@@ -1,44 +1,74 @@
-// Sushi shop data types (from OSM GeoJSON)
+// ============================================
+// My Wagashi (和菓子) - Wagashi spot types
+// Pins = 全国の和菓子屋（和菓子店・甘味処・工房）
+// ============================================
 
-export interface SushiShop {
-  osm_id: string;
-  name: string;
-  name_reading?: string;  // ひらがな/カタカナ読み（あれば）
-  amenity: string;
-  shop: string;
-  cuisine: string;
-  'addr:prefecture': string;
-  'addr:city': string;
-  'addr:full': string;
-  source: string;
+export type WagashiSpotType = 'shop' | 'cafe' | 'factory';
+
+/** ジャンル = 主な材料（フィルタ用） */
+export type WagashiGenre =
+  | 'mochi'    // 餅系
+  | 'an'       // 餡・羊羹系
+  | 'nerikiri' // 練り切り・きんとん
+  | 'baked'    // 焼き菓子
+  | 'sugar'    // 落雁・糖芸
+  | 'manju'    // 饅頭系
+  | 'other';   // その他・総合
+
+export const WAGASHI_GENRE_OPTIONS: { value: WagashiGenre; label: string; shortLabel: string }[] = [
+  { value: 'mochi', label: '餅系（大福・おはぎ・柏餅・団子など）', shortLabel: '餅系' },
+  { value: 'an', label: '餡・羊羹系（羊羹・最中・どら焼き・練り羊羹など）', shortLabel: '餡・羊羹' },
+  { value: 'nerikiri', label: '練り切り・きんとん（上生菓子）', shortLabel: '練り切り' },
+  { value: 'baked', label: '焼き菓子（せんべい・煎餅・八つ橋・カステラなど）', shortLabel: '焼き菓子' },
+  { value: 'sugar', label: '落雁・糖芸（落雁・有平糖・金平糖・和三盆など）', shortLabel: '落雁・糖芸' },
+  { value: 'manju', label: '饅頭系（焼き饅頭・蒸し饅頭・栗饅頭・もみじ饅頭など）', shortLabel: '饅頭系' },
+  { value: 'other', label: 'その他・総合', shortLabel: 'その他' },
+];
+
+export function getWagashiGenreLabel(genre: WagashiGenre): string {
+  return WAGASHI_GENRE_OPTIONS.find((o) => o.value === genre)?.label ?? genre;
 }
 
-export interface SushiFeature {
+export interface WagashiSpot {
+  id: string;
+  name: string;
+  name_reading?: string;
+  prefecture: string;
+  address?: string;
+  type: WagashiSpotType;
+  /** 主な材料（ジャンル） */
+  genre?: WagashiGenre;
+  characteristics?: string;
+  source?: string;
+}
+
+export interface WagashiFeature {
   type: 'Feature';
   geometry: {
     type: 'Point';
     coordinates: [number, number]; // [longitude, latitude]
   };
-  properties: SushiShop;
+  properties: WagashiSpot & { 'addr:prefecture'?: string; 'addr:full'?: string };
 }
 
-export interface SushiGeoJSON {
+export interface WagashiGeoJSON {
   type: 'FeatureCollection';
-  features: SushiFeature[];
+  features: WagashiFeature[];
 }
 
-// Map pin for display
-export interface SushiPin {
+export interface WagashiPin {
   id: string;
   lat: number;
   lng: number;
   name: string;
-  nameReading: string;  // ソート用（読み仮名があればそれ、なければname）
-  type: 'restaurant' | 'fast_food' | 'seafood';
-  cuisine: string;
+  nameReading: string;
+  type: WagashiSpotType;
+  /** 主な材料（ジャンル） */
+  genre: WagashiGenre;
   address: string;
-  prefecture: string;   // 都道府県（フィルター用）
-  isCustom?: boolean;   // ユーザーが追加した店舗
+  prefecture: string;
+  characteristics?: string;
+  isCustom?: boolean;
 }
 
 // 都道府県リスト
