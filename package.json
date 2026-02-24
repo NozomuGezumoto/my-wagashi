@@ -13,7 +13,8 @@
     "build:ios": "eas build --profile production --platform ios",
     "build:android": "eas build --profile production --platform android",
     "submit:ios": "eas submit --profile production --platform ios --latest",
-    "submit:android": "eas submit --profile production --platform android --latest"
+    "submit:android": "eas submit --profile production --platform android --latest",
+    "release:tag": "git tag -a v1.0.0 -m 'Release v1.0.0'"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
