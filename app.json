@@ -7,27 +7,28 @@
       "policy": "appVersion"
     },
     "orientation": "portrait",
-    "icon": "./assets/wagashi-app-icon.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "mywagashi",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/wagashi-app-icon.png",
+      "image": "./assets/images/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#2d5016"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mywagashi.app",
-      "buildNumber": "1",
+      "buildNumber": "3",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "和菓子の写真を追加するためにフォトライブラリへのアクセスが必要です",
-        "NSCameraUsageDescription": "和菓子の写真を撮影するためにカメラへのアクセスが必要です"
+        "NSCameraUsageDescription": "和菓子の写真を撮影するためにカメラへのアクセスが必要です",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/wagashi-app-icon.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#2d5016"
       },
       "package": "com.mywagashi.app",
@@ -36,12 +37,15 @@
         "googleMaps": {
           "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
         }
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/wagashi-app-icon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
@@ -55,6 +59,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "33a6b124-bab5-422d-a8f8-acb113bbdd39"
+      }
     }
   }
 }

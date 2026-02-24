@@ -9,6 +9,7 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
       </Stack>
     </GestureHandlerRootView>
   );

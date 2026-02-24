@@ -5,6 +5,7 @@
 
 import React, { useRef, useCallback, useMemo, useState, memo, useEffect } from 'react';
 import { StyleSheet, View, Text, Pressable, Switch } from 'react-native';
+import { useRouter } from 'expo-router';
 import MapView, { Marker, Region } from 'react-native-maps';
 import ClusteredMapView from 'react-native-map-clustering';
 import { Ionicons } from '@expo/vector-icons';
@@ -146,6 +147,7 @@ const ListItem = memo(function ListItem({ spot, isTried, isWantToTry, onPress }:
 });
 
 export default function WagashiMap() {
+  const router = useRouter();
   const mapRef = useRef<MapView | null>(null);
   const detailSheetRef = useRef<BottomSheet>(null);
   const listSheetRef = useRef<BottomSheet>(null);
@@ -543,6 +545,12 @@ export default function WagashiMap() {
             renderItem={renderListItem}
             contentContainerStyle={styles.listContent}
             ItemSeparatorComponent={ListSeparator}
+            ListFooterComponent={
+              <Pressable onPress={() => router.push('/privacy-policy')} style={styles.privacyLink}>
+                <Text style={styles.privacyLinkText}>プライバシーポリシー</Text>
+                <Ionicons name="chevron-forward" size={14} color={BEER_COLORS.textMuted} />
+              </Pressable>
+            }
             initialNumToRender={10}
             maxToRenderPerBatch={5}
             windowSize={3}
@@ -639,6 +647,8 @@ const styles = StyleSheet.create({
   listEmpty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: SPACING.xl },
   listEmptyIcon: { fontSize: 48, marginBottom: SPACING.md },
   listEmptyText: { fontSize: 14, color: BEER_COLORS.textMuted, textAlign: 'center' },
+  privacyLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.lg, paddingBottom: SPACING.xl, gap: 4 },
+  privacyLinkText: { fontSize: 13, color: BEER_COLORS.textMuted },
   advancedFilters: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md, borderBottomWidth: 1, borderBottomColor: BEER_COLORS.border, marginBottom: SPACING.sm },
   advancedFilterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: SPACING.sm },
   advancedFilterSection: { paddingVertical: SPACING.sm },
